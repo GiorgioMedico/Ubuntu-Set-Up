@@ -294,6 +294,7 @@ install_ros2() {
 # Funzione per configurare Git
 configure_git() {
     REAL_USER=$(logname || echo $SUDO_USER)
+    
     if [ -f "/home/$REAL_USER/.gitconfig" ]; then
         print_warning "Git è già configurato. Vuoi riconfigurarlo? [y/N]"
         read -r response
@@ -315,16 +316,7 @@ configure_git() {
         git config --global color.ui auto
     "
     
-    # Genera una chiave SSH se non esiste
-    if [ ! -f "/home/$REAL_USER/.ssh/id_rsa" ]; then
-        print_status "Generazione chiave SSH..."
-        su - $REAL_USER -c "ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ''"
-        print_success "Chiave SSH generata con successo"
-        print_status "La tua chiave pubblica SSH è:"
-        su - $REAL_USER -c "cat ~/.ssh/id_rsa.pub"
-    else
-        print_success "Chiave SSH già presente"
-    fi
+    print_success "Git configurato con successo"
 }
 
 # Funzione per aggiornare il sistema
