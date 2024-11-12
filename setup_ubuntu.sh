@@ -396,6 +396,111 @@ install_docker() {
     show_progress 0.05
 }
 
+# Funzione per configurare Terminator
+configure_terminator() {
+    REAL_USER=$(logname || echo $SUDO_USER)
+    CONFIG_DIR="/home/$REAL_USER/.config/terminator"
+    CONFIG_FILE="$CONFIG_DIR/config"
+    
+    # Verifica se terminator è installato
+    if ! command_exists terminator; then
+        print_error "Terminator non è installato. Installalo prima di configurarlo."
+        return
+    }
+    
+    print_status "Configurazione Terminator..."
+    
+    # Crea la directory di configurazione se non esiste
+    su - $REAL_USER -c "mkdir -p $CONFIG_DIR"
+    
+    # Crea il nuovo file di configurazione
+    su - $REAL_USER -c "cat > '$CONFIG_FILE' << 'EOL'
+[global_config]
+ suppress_multiple_term_dialog = True
+[keybindings]
+broadcast_off = <Alt>o
+broadcast_all = <Alt>a
+[profiles]
+ [[default]]
+cursor_color = \"#aaaaaa\"
+[layouts]
+ [[default]]
+ [[[child0]]]
+type = Window
+parent = \"\"
+order = 0
+position = 26:23
+maximised = False
+fullscreen = False
+size = 734, 451
+title = giorgio@cb0xx-22: ~
+last_active_term = b169cbcc-f260-4676-b46b-f157a2f1c9d9
+last_active_window = True
+ [[[child1]]]
+type = VPaned
+parent = child0
+order = 0
+position = 223
+ratio = 0.5
+ [[[child2]]]
+type = HPaned
+parent = child1
+order = 0
+position = 364
+ratio = 0.4993141289437586
+ [[[terminal3]]]
+type = Terminal
+parent = child2
+order = 0
+profile = default
+uuid = 40e3a1fd-1359-43e2-8cf6-a8476f08935d
+ [[[terminal4]]]
+type = Terminal
+parent = child2
+order = 1
+profile = default
+uuid = c99a7833-6c8a-4085-8432-4aae2d249a97
+ [[[child5]]]
+type = HPaned
+parent = child1
+order = 1
+position = 364
+ratio = 0.4993141289437586
+ [[[terminal6]]]
+type = Terminal
+parent = child5
+order = 0
+profile = default
+uuid = 437a2cb8-2c05-4c04-a0ab-7f3f1129f247
+ [[[child7]]]
+type = VPaned
+parent = child5
+order = 1
+position = 109
+ratio = 0.5
+ [[[terminal8]]]
+type = Terminal
+parent = child7
+order = 0
+profile = default
+uuid = b169cbcc-f260-4676-b46b-f157a2f1c9d9
+ [[[terminal9]]]
+type = Terminal
+parent = child7
+order = 1
+profile = default
+uuid = a4c256e0-a420-4ec4-91b8-aa98014127e7
+[plugins]
+EOL"
+    
+    # Imposta i permessi corretti
+    chown -R $REAL_USER:$REAL_USER "$CONFIG_DIR"
+    
+    print_success "Configurazione Terminator completata"
+    print_warning "Riavvia Terminator per applicare le modifiche"
+    show_progress 0.05
+}
+
 # Funzione per installare Orca-Slicer
 install_orca_slicer() {
     print_status "Installazione Orca-Slicer..."
@@ -463,6 +568,7 @@ main() {
     echo -e "${CYAN}8)${NC} Configura Git"
     echo -e "${CYAN}9)${NC} Installa Docker"
     echo -e "${CYAN}10)${NC} Installa Orca-Slicer"
+    echo -e "${CYAN}11)${NC} Configura Terminator"
     echo -e "${CYAN}0)${NC} Esci"
     echo -e "${BLUE}─────────────────────────${NC}"
     
@@ -479,6 +585,7 @@ main() {
             install_docker
             install_orca_slicer
             configure_git
+            configure_terminator
             ;;
         2)
             update_system
@@ -506,6 +613,9 @@ main() {
             ;;
         10)
             install_orca_slicer
+            ;;
+        11)
+            configure_terminator
             ;;
         0)
             echo -e "${GREEN}Arrivederci!${NC}"
