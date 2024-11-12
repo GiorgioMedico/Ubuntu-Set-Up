@@ -335,58 +335,117 @@ update_system() {
     fi
 }
 
-
 # Function to install Docker and Docker Compose
 install_docker() {
     if command_exists docker && command_exists docker-compose; then
         print_success "Docker e Docker Compose sono già installati!"
         return
     }
-    
+
     print_status "Installazione Docker e Docker Compose..."
-    
+
     # Remove old versions if present
-    apt remove -y docker docker-engine docker.io containerd runc || true
-    
+    print_status "Rimozione versioni precedenti..."
+    for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do
+        apt-get remove -y $pkg || true
+    done
+
     # Install prerequisites
     print_status "Installazione prerequisiti..."
-    apt update
-    apt install -y \
-        ca-certificates \
-        curl \
-        gnupg \
-        lsb-release
-    
+    apt-get update
+    apt-get install -y ca-certificates curl
+
     # Add Docker's official GPG key
     print_status "Aggiunta della chiave GPG di Docker..."
-    mkdir -p /etc/apt/keyrings
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-    
-    # Set up the repository
+    install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+    chmod a+r /etc/apt/keyrings/docker.asc
+
+    # Add the repository to Apt sources
+    print_status "Configurazione repository Docker..."
     echo \
-        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-        $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-    
+        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+        $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+        tee /etc/apt/sources.list.d/docker.list > /dev/null
+
     # Install Docker Engine and Docker Compose
     print_status "Installazione Docker Engine e Docker Compose..."
-    apt update
-    if apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin; then
+    apt-get update
+    if apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin; then
         print_success "Docker installato con successo"
     else
         print_error "Errore nell'installazione di Docker"
         return
     fi
-    
+
     # Add user to docker group
     REAL_USER=$(logname || echo $SUDO_USER)
     print_status "Aggiunta dell'utente $REAL_USER al gruppo docker..."
     usermod -aG docker $REAL_USER
-    
+
+    # Test Docker installation
+    print_status "Verifica installazione Docker..."
+    if docker run --rm hello-world > /dev/null 2>&1; then
+        print_success "Test Docker completato con successo"
+    else
+        print_warning "Test Docker fallito. Potrebbe essere necessario riavviare il sistema"
+    fi
+
     print_success "Installazione Docker completata"
     print_warning "Per utilizzare Docker senza sudo, disconnetti e riconnetti la sessione o riavvia il sistema"
     show_progress 0.05
 }
 
+# Funzione per installare Orca-Slicer
+install_orca_slicer() {
+    print_status "Installazione Orca-Slicer..."
+    
+    REAL_USER=$(logname || echo $SUDO_USER)
+    INSTALL_DIR="/home/$REAL_USER/.local/bin"
+    DESKTOP_DIR="/home/$REAL_USER/.local/share/applications"
+    ORCA_URL="https://github.com/SoftFever/OrcaSlicer/releases/download/v2.2.0/OrcaSlicer_Linux_Ubuntu2404_V2.2.0.AppImage"
+    ORCA_FILENAME="orca-slicer.AppImage"
+    
+    # Crea le directory necessarie
+    su - $REAL_USER -c "
+        mkdir -p $INSTALL_DIR
+        mkdir -p $DESKTOP_DIR
+    "
+    
+    # Scarica Orca-Slicer
+    print_status "Download Orca-Slicer..."
+    if su - $REAL_USER -c "wget -q '$ORCA_URL' -O '$INSTALL_DIR/$ORCA_FILENAME'"; then
+        print_success "Download completato"
+    else
+        print_error "Errore durante il download"
+        return
+    fi
+    
+    # Rendi l'AppImage eseguibile
+    print_status "Configurazione permessi..."
+    chmod +x "/home/$REAL_USER/.local/bin/$ORCA_FILENAME"
+    
+    # Crea il file .desktop per l'integrazione nel menu
+    print_status "Creazione collegamento nel menu applicazioni..."
+    su - $REAL_USER -c "cat > '$DESKTOP_DIR/orca-slicer.desktop' << EOL
+[Desktop Entry]
+Name=Orca-Slicer
+Comment=3D Printing Slicer
+Exec=$INSTALL_DIR/$ORCA_FILENAME
+Icon=printer
+Terminal=false
+Type=Application
+Categories=Graphics;3DGraphics;Engineering;
+StartupNotify=true
+EOL"
+    
+    # Aggiorna il database delle applicazioni
+    su - $REAL_USER -c "update-desktop-database ~/.local/share/applications"
+    
+    print_success "Installazione Orca-Slicer completata"
+    print_success "Puoi trovare Orca-Slicer nel menu delle applicazioni o eseguirlo da terminale con 'orca-slicer.AppImage'"
+    show_progress 0.05
+}
 
 # Menu principale con interfaccia migliorata
 main() {
@@ -403,6 +462,7 @@ main() {
     echo -e "${CYAN}7)${NC} Installa ROS2"
     echo -e "${CYAN}8)${NC} Configura Git"
     echo -e "${CYAN}9)${NC} Installa Docker"
+    echo -e "${CYAN}10)${NC} Installa Orca-Slicer"
     echo -e "${CYAN}0)${NC} Esci"
     echo -e "${BLUE}─────────────────────────${NC}"
     
@@ -417,6 +477,7 @@ main() {
             install_miniconda
             install_ros2
             install_docker
+            install_orca_slicer
             configure_git
             ;;
         2)
@@ -443,6 +504,9 @@ main() {
         9)
             install_docker
             ;;
+        10)
+            install_orca_slicer
+            ;;
         0)
             echo -e "${GREEN}Arrivederci!${NC}"
             exit 0
@@ -461,9 +525,3 @@ main() {
 
 # Esegui il menu principale
 main
-
-
-
-docker 
-orca
-config terminator
