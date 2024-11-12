@@ -234,39 +234,61 @@ install_miniconda() {
 
 # Funzione per installare ROS2
 install_ros2() {
-    if [ -d "/opt/ros/humble" ]; then
-        print_success "ROS2 Humble è già installato!"
+    if [ -d "/opt/ros/jazzy" ]; then
+        print_success "ROS2 Jazzy è già installato!"
         return
     fi
+
+    print_status "Installazione ROS2 Jazzy..."
     
-    print_status "Installazione ROS2 Humble..."
-    
-    # Locale setup
+    # Verifica e setup locale
+    print_status "Configurazione locale..."
+    locale  # Verifica iniziale UTF-8
     apt update && apt install -y locales
     locale-gen en_US en_US.UTF-8
     update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
     export LANG=en_US.UTF-8
-    
-    print_status "Configurazione repository ROS2..."
+    locale  # Verifica configurazione
+
+    # Installazione prerequisiti
+    print_status "Installazione prerequisiti..."
     apt install -y software-properties-common
     add-apt-repository universe
-    
+
+    # Configurazione repository ROS2
+    print_status "Configurazione repository ROS2..."
+    apt update && apt install -y curl
     curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null
-    
-    print_status "Installazione ROS2 Humble Desktop..."
-    apt update
-    if apt install -y ros-humble-desktop ros-dev-tools; then
-        print_success "ROS2 Humble installato con successo"
-        show_progress 0.05
+
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null
+
+    # Installazione ros-dev-tools
+    print_status "Installazione ROS development tools..."
+    apt update && apt install -y ros-dev-tools
+
+    # Aggiornamento sistema
+    print_status "Aggiornamento sistema..."
+    apt update && apt upgrade -y
+
+    # Installazione ROS2 Jazzy
+    print_status "Installazione ROS2 Jazzy Desktop..."
+    if apt install -y ros-jazzy-desktop; then
+        print_success "ROS2 Jazzy installato con successo"
     else
-        print_error "Errore nell'installazione di ROS2 Humble"
+        print_error "Errore nell'installazione di ROS2 Jazzy"
         return
     fi
-    
-    # Aggiungi setup al .bashrc dell'utente reale
+
+    # Configurazione ambiente
     REAL_USER=$(logname || echo $SUDO_USER)
-    su - $REAL_USER -c "echo 'source /opt/ros/humble/setup.bash' >> ~/.bashrc"
+    print_status "Configurazione ambiente per l'utente $REAL_USER..."
+    
+    # Aggiungi source al .bashrc dell'utente
+    su - $REAL_USER -c "echo 'source /opt/ros/jazzy/setup.bash' >> ~/.bashrc"
+    
+    print_success "Configurazione ROS2 Jazzy completata"
+    print_warning "Per completare l'installazione, chiudi e riapri il terminale o esegui: source ~/.bashrc"
+    show_progress 0.05
 }
 
 # Funzione per configurare Git
