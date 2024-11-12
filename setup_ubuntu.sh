@@ -340,7 +340,7 @@ install_docker() {
     if command_exists docker && command_exists docker-compose; then
         print_success "Docker e Docker Compose sono già installati!"
         return
-    }
+    fi
 
     print_status "Installazione Docker e Docker Compose..."
 
@@ -406,7 +406,7 @@ configure_terminator() {
     if ! command_exists terminator; then
         print_error "Terminator non è installato. Installalo prima di configurarlo."
         return
-    }
+    fi
     
     print_status "Configurazione Terminator..."
     
@@ -508,47 +508,97 @@ install_orca_slicer() {
     REAL_USER=$(logname || echo $SUDO_USER)
     INSTALL_DIR="/home/$REAL_USER/.local/bin"
     DESKTOP_DIR="/home/$REAL_USER/.local/share/applications"
-    ORCA_URL="https://github.com/SoftFever/OrcaSlicer/releases/download/v2.2.0/OrcaSlicer_Linux_Ubuntu2404_V2.2.0.AppImage"
-    ORCA_FILENAME="orca-slicer.AppImage"
+    ICONS_DIR="/home/$REAL_USER/.local/share/icons/hicolor/256x256/apps"
     
+    # Aggiungi il repository per webkit2gtk-4.1
+    print_status "Configurazione repository per webkit2gtk-4.1..."
+    add-apt-repository -y ppa:webkit-team/ppa
+    apt-get update
+
+    # Installa tutte le dipendenze necessarie
+    print_status "Installazione dipendenze..."
+    apt-get install -y \
+        libfuse2 \
+        wget \
+        libwebkit2gtk-4.1-0 \
+        libglib2.0-0 \
+        libgtk-3-0 \
+        libpango-1.0-0 \
+        libcairo2 \
+        libjpeg-dev \
+        libhunspell-1.7-0
+
     # Crea le directory necessarie
+    print_status "Creazione directory..."
     su - $REAL_USER -c "
-        mkdir -p $INSTALL_DIR
-        mkdir -p $DESKTOP_DIR
+        mkdir -p '$INSTALL_DIR'
+        mkdir -p '$DESKTOP_DIR'
+        mkdir -p '$ICONS_DIR'
     "
     
-    # Scarica Orca-Slicer
-    print_status "Download Orca-Slicer..."
-    if su - $REAL_USER -c "wget -q '$ORCA_URL' -O '$INSTALL_DIR/$ORCA_FILENAME'"; then
-        print_success "Download completato"
-    else
-        print_error "Errore durante il download"
-        return
+    # Scarica l'ultima versione di Orca-Slicer
+    print_status "Download ultima versione di Orca-Slicer..."
+    API_URL="https://api.github.com/repos/SoftFever/OrcaSlicer/releases/latest"
+    DOWNLOAD_URL=$(curl -s $API_URL | grep "browser_download_url.*Ubuntu.*AppImage" | cut -d '"' -f 4)
+    
+    if [ -z "$DOWNLOAD_URL" ]; then
+        print_error "Impossibile trovare l'URL di download"
+        return 1
     fi
     
-    # Rendi l'AppImage eseguibile
-    print_status "Configurazione permessi..."
-    chmod +x "/home/$REAL_USER/.local/bin/$ORCA_FILENAME"
+    print_status "Download da: $DOWNLOAD_URL"
     
-    # Crea il file .desktop per l'integrazione nel menu
+    # Rimuovi versione precedente se esiste
+    if [ -f "$INSTALL_DIR/orca-slicer.AppImage" ]; then
+        print_status "Rimozione versione precedente..."
+        rm "$INSTALL_DIR/orca-slicer.AppImage"
+    fi
+    
+    # Scarica il file
+    if ! su - $REAL_USER -c "wget -q '$DOWNLOAD_URL' -O '$INSTALL_DIR/orca-slicer.AppImage'"; then
+        print_error "Download fallito"
+        return 1
+    fi
+    
+    # Imposta i permessi
+    print_status "Configurazione permessi..."
+    chmod +x "$INSTALL_DIR/orca-slicer.AppImage"
+    chown $REAL_USER:$REAL_USER "$INSTALL_DIR/orca-slicer.AppImage"
+    
+    # Scarica l'icona
+    print_status "Download icona..."
+    ICON_URL="https://raw.githubusercontent.com/SoftFever/OrcaSlicer/main/resources/images/OrcaSlicer.png"
+    su - $REAL_USER -c "wget -q '$ICON_URL' -O '$ICONS_DIR/orca-slicer.png'"
+    
+    # Crea il file .desktop
     print_status "Creazione collegamento nel menu applicazioni..."
     su - $REAL_USER -c "cat > '$DESKTOP_DIR/orca-slicer.desktop' << EOL
 [Desktop Entry]
 Name=Orca-Slicer
-Comment=3D Printing Slicer
-Exec=$INSTALL_DIR/$ORCA_FILENAME
-Icon=printer
+Comment=Advanced 3D Printing Slicer
+Exec=$INSTALL_DIR/orca-slicer.AppImage
+Icon=orca-slicer
 Terminal=false
 Type=Application
 Categories=Graphics;3DGraphics;Engineering;
 StartupNotify=true
 EOL"
     
-    # Aggiorna il database delle applicazioni
-    su - $REAL_USER -c "update-desktop-database ~/.local/share/applications"
+    # Imposta i permessi corretti per il file .desktop
+    chmod +x "$DESKTOP_DIR/orca-slicer.desktop"
     
-    print_success "Installazione Orca-Slicer completata"
-    print_success "Puoi trovare Orca-Slicer nel menu delle applicazioni o eseguirlo da terminale con 'orca-slicer.AppImage'"
+    # Aggiorna il database delle applicazioni
+    su - $REAL_USER -c "update-desktop-database '$DESKTOP_DIR'"
+    
+    # Verifica l'installazione
+    if [ -x "$INSTALL_DIR/orca-slicer.AppImage" ]; then
+        print_success "Installazione Orca-Slicer completata con successo"
+        print_success "Puoi avviare Orca-Slicer dal menu delle applicazioni o eseguendo 'orca-slicer.AppImage'"
+    else
+        print_error "Si è verificato un problema durante l'installazione"
+        return 1
+    fi
+    
     show_progress 0.05
 }
 
