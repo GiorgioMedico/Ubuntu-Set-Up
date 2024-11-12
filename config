@@ -1,76 +1,239 @@
+# Configurazione globale per tutte le istanze di Terminator
 [global_config]
-  suppress_multiple_term_dialog = True
+ # Disabilita i dialoghi multipli dei terminali
+ suppress_multiple_term_dialog = True
+ # Colore di sfondo della barra del titolo per il terminale attivo
+ title_transmit_bg_color = "#204a87"
+ # Colore di sfondo della barra del titolo per i terminali inattivi
+ title_inactive_bg_color = "#73797f"
+ # Plugin abilitati
+ enabled_plugins = ActivityWatch, TerminalShot, CustomCommandsMenu
+ # Divide sempre nuove finestre usando il profilo specificato
+ always_split_with_profile = True
+ # Abilita la copia intelligente del testo
+ smart_copy = True
+ # Stato predefinito della finestra all'avvio
+ window_state = maximise
+ # Comportamento del focus quando si chiude un terminale
+ focus_on_close = smart
+
+# Configurazione delle scorciatoie da tastiera
 [keybindings]
-  broadcast_off = <Alt>o
-  broadcast_all = <Alt>a
+ # Disattiva la modalità broadcast
+ broadcast_off = <Alt>o
+ # Attiva broadcast su tutti i terminali
+ broadcast_all = <Alt>a
+ # Chiusura del terminale corrente
+ close_term = <Ctrl><Shift>w
+ # Copia e incolla
+ copy = <Ctrl><Shift>c
+ paste = <Ctrl><Shift>v
+ # Navigazione tra tab
+ next_tab = <Ctrl>Tab
+ prev_tab = <Ctrl><Shift>Tab
+ # Scorciatoie per passare a tab specifici
+ switch_to_tab_1 = <Alt>1
+ switch_to_tab_2 = <Alt>2
+ switch_to_tab_3 = <Alt>3
+ switch_to_tab_4 = <Alt>4
+
+# Configurazione dei profili
 [profiles]
-  [[default]]
-    cursor_color = "#aaaaaa"
+ [[default]]
+ # Tema Nord - schema colori moderno e minimalista
+ background_color = "#2e3440"
+ foreground_color = "#d8dee9"
+ cursor_color = "#d8dee9"
+ # Palette colori completa del tema Nord
+ palette = "#3b4252:#bf616a:#a3be8c:#ebcb8b:#81a1c1:#b48ead:#88c0d0:#e5e9f0:#4c566a:#bf616a:#a3be8c:#ebcb8b:#81a1c1:#b48ead:#8fbcbb:#eceff4"
+ # Configurazione font
+ font = Ubuntu Mono 15
+ use_system_font = False
+ # Comportamento del terminale
+ scrollback_lines = 10000
+ copy_on_selection = True
+ scroll_on_output = False
+ scroll_on_keystroke = True
+ show_titlebar = False
+
+ [[hacker]]
+ # Tema stile Matrix/Hacker con sfondo scuro e testo verde
+ background_color = "#0d0d0d"
+ foreground_color = "#00ff00"
+ cursor_color = "#00ff00"
+ cursor_shape = ibeam
+ cursor_blink = True
+ # Palette di verdi per effetto Matrix
+ palette = "#000000:#ff0000:#00ff00:#00cc00:#00aa00:#009900:#00dd00:#00ff00:#008800:#ff0000:#00ff00:#00cc00:#00aa00:#009900:#00dd00:#00ff00"
+ # Font monospace Hack
+ font = Hack 12
+ use_system_font = False
+ # Impostazioni scrollback e comportamento
+ scrollback_lines = 99999
+ copy_on_selection = True
+ scroll_on_output = True
+ scroll_on_keystroke = True
+ show_titlebar = False
+ # Effetti visivi
+ background_darkness = 0.95
+ background_type = transparent
+ # Rimuove i bordi della finestra
+ borderless = True
+
+ [[base]]
+ # Profilo base minimo con solo il colore del cursore definito
+ cursor_color = "#aaaaaa"
+
+# Layout predefinito con disposizione a griglia 2x3
 [layouts]
-  [[default]]
-    [[[child0]]]
-      type = Window
-      parent = ""
-      order = 0
-      position = 26:23
-      maximised = False
-      fullscreen = False
-      size = 734, 451
-      title = giorgio@cb0xx-22: ~
-      last_active_term = b169cbcc-f260-4676-b46b-f157a2f1c9d9
-      last_active_window = True
-    [[[child1]]]
-      type = VPaned
-      parent = child0
-      order = 0
-      position = 223
-      ratio = 0.5
-    [[[child2]]]
-      type = HPaned
-      parent = child1
-      order = 0
-      position = 364
-      ratio = 0.4993141289437586
-    [[[terminal3]]]
-      type = Terminal
-      parent = child2
-      order = 0
-      profile = default
-      uuid = 40e3a1fd-1359-43e2-8cf6-a8476f08935d
-    [[[terminal4]]]
-      type = Terminal
-      parent = child2
-      order = 1
-      profile = default
-      uuid = c99a7833-6c8a-4085-8432-4aae2d249a97
-    [[[child5]]]
-      type = HPaned
-      parent = child1
-      order = 1
-      position = 364
-      ratio = 0.4993141289437586
-    [[[terminal6]]]
-      type = Terminal
-      parent = child5
-      order = 0
-      profile = default
-      uuid = 437a2cb8-2c05-4c04-a0ab-7f3f1129f247
-    [[[child7]]]
-      type = VPaned
-      parent = child5
-      order = 1
-      position = 109
-      ratio = 0.5
-    [[[terminal8]]]
-      type = Terminal
-      parent = child7
-      order = 0
-      profile = default
-      uuid = b169cbcc-f260-4676-b46b-f157a2f1c9d9
-    [[[terminal9]]]
-      type = Terminal
-      parent = child7
-      order = 1
-      profile = default
-      uuid = a4c256e0-a420-4ec4-91b8-aa98014127e7
-[plugins]
+ [[default]]
+ # Configurazione finestra principale
+ [[[child0]]]
+ type = Window
+ parent = ""
+ order = 0
+ position = 26:23
+ maximised = False
+ fullscreen = False
+ size = 734, 451
+ 
+ # Divisione verticale principale
+ [[[child1]]]
+ type = VPaned
+ parent = child0
+ order = 0
+ position = 223
+ ratio = 0.5
+ 
+ # Prima riga: divisione orizzontale
+ [[[child2]]]
+ type = HPaned
+ parent = child1
+ order = 0
+ position = 364
+ ratio = 0.5
+ 
+ # Terminali della prima riga
+ [[[terminal3]]]
+ type = Terminal
+ parent = child2
+ order = 0
+ profile = default
+ 
+ [[[terminal4]]]
+ type = Terminal
+ parent = child2
+ order = 1
+ profile = default
+ 
+ # Seconda riga: layout complesso
+ [[[child5]]]
+ type = HPaned
+ parent = child1
+ order = 1
+ position = 364
+ ratio = 0.5
+ 
+ [[[terminal6]]]
+ type = Terminal
+ parent = child5
+ order = 0
+ profile = default
+ 
+ # Divisione verticale aggiuntiva
+ [[[child7]]]
+ type = VPaned
+ parent = child5
+ order = 1
+ position = 109
+ ratio = 0.5
+ 
+ # Ultimi due terminali
+ [[[terminal8]]]
+ type = Terminal
+ parent = child7
+ order = 0
+ profile = default
+ 
+ [[[terminal9]]]
+ type = Terminal
+ parent = child7
+ order = 1
+ profile = default
+
+#  [global_config]
+#   suppress_multiple_term_dialog = True
+# [keybindings]
+#   broadcast_off = <Alt>o
+#   broadcast_all = <Alt>a
+# [profiles]
+#   [[default]]
+#     cursor_color = "#aaaaaa"
+# [layouts]
+#   [[default]]
+#     [[[child0]]]
+#       type = Window
+#       parent = ""
+#       order = 0
+#       position = 26:23
+#       maximised = False
+#       fullscreen = False
+#       size = 734, 451
+#       title = giorgio@cb0xx-22: ~
+#       last_active_term = b169cbcc-f260-4676-b46b-f157a2f1c9d9
+#       last_active_window = True
+#     [[[child1]]]
+#       type = VPaned
+#       parent = child0
+#       order = 0
+#       position = 223
+#       ratio = 0.5
+#     [[[child2]]]
+#       type = HPaned
+#       parent = child1
+#       order = 0
+#       position = 364
+#       ratio = 0.4993141289437586
+#     [[[terminal3]]]
+#       type = Terminal
+#       parent = child2
+#       order = 0
+#       profile = default
+#       uuid = 40e3a1fd-1359-43e2-8cf6-a8476f08935d
+#     [[[terminal4]]]
+#       type = Terminal
+#       parent = child2
+#       order = 1
+#       profile = default
+#       uuid = c99a7833-6c8a-4085-8432-4aae2d249a97
+#     [[[child5]]]
+#       type = HPaned
+#       parent = child1
+#       order = 1
+#       position = 364
+#       ratio = 0.4993141289437586
+#     [[[terminal6]]]
+#       type = Terminal
+#       parent = child5
+#       order = 0
+#       profile = default
+#       uuid = 437a2cb8-2c05-4c04-a0ab-7f3f1129f247
+#     [[[child7]]]
+#       type = VPaned
+#       parent = child5
+#       order = 1
+#       position = 109
+#       ratio = 0.5
+#     [[[terminal8]]]
+#       type = Terminal
+#       parent = child7
+#       order = 0
+#       profile = default
+#       uuid = b169cbcc-f260-4676-b46b-f157a2f1c9d9
+#     [[[terminal9]]]
+#       type = Terminal
+#       parent = child7
+#       order = 1
+#       profile = default
+#       uuid = a4c256e0-a420-4ec4-91b8-aa98014127e7
+# [plugins]
