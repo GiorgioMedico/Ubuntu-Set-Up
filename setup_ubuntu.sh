@@ -211,16 +211,24 @@ install_miniconda() {
     fi
     
     print_status "Installazione Miniconda..."
-    su - $REAL_USER -c "wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh"
-    su - $REAL_USER -c "bash /tmp/miniconda.sh -b -p $MINICONDA_PATH"
-    rm /tmp/miniconda.sh
     
-    # Aggiungi miniconda al PATH dell'utente
-    su - $REAL_USER -c "echo 'export PATH=\"$MINICONDA_PATH/bin:\$PATH\"' >> ~/.bashrc"
+    # Crea directory e scarica l'installer come utente reale
+    su - $REAL_USER -c "
+        mkdir -p ~/miniconda3
+        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
+        bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
+        rm ~/miniconda3/miniconda.sh
+    "
     
-    # Inizializza conda per bash
-    su - $REAL_USER -c "$MINICONDA_PATH/bin/conda init bash"
+    # Attiva, inizializza conda e configura per non attivarsi automaticamente
+    su - $REAL_USER -c "
+        source ~/miniconda3/bin/activate
+        conda init --all
+        conda config --set auto_activate_base false
+    "
+    
     print_success "Miniconda installato con successo"
+    print_warning "Per completare l'installazione, chiudi e riapri il terminale o esegui: source ~/.bashrc"
     show_progress 0.05
 }
 
