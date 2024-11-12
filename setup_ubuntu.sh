@@ -335,6 +335,59 @@ update_system() {
     fi
 }
 
+
+# Function to install Docker and Docker Compose
+install_docker() {
+    if command_exists docker && command_exists docker-compose; then
+        print_success "Docker e Docker Compose sono già installati!"
+        return
+    }
+    
+    print_status "Installazione Docker e Docker Compose..."
+    
+    # Remove old versions if present
+    apt remove -y docker docker-engine docker.io containerd runc || true
+    
+    # Install prerequisites
+    print_status "Installazione prerequisiti..."
+    apt update
+    apt install -y \
+        ca-certificates \
+        curl \
+        gnupg \
+        lsb-release
+    
+    # Add Docker's official GPG key
+    print_status "Aggiunta della chiave GPG di Docker..."
+    mkdir -p /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    
+    # Set up the repository
+    echo \
+        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+        $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+    
+    # Install Docker Engine and Docker Compose
+    print_status "Installazione Docker Engine e Docker Compose..."
+    apt update
+    if apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin; then
+        print_success "Docker installato con successo"
+    else
+        print_error "Errore nell'installazione di Docker"
+        return
+    fi
+    
+    # Add user to docker group
+    REAL_USER=$(logname || echo $SUDO_USER)
+    print_status "Aggiunta dell'utente $REAL_USER al gruppo docker..."
+    usermod -aG docker $REAL_USER
+    
+    print_success "Installazione Docker completata"
+    print_warning "Per utilizzare Docker senza sudo, disconnetti e riconnetti la sessione o riavvia il sistema"
+    show_progress 0.05
+}
+
+
 # Menu principale con interfaccia migliorata
 main() {
     clear
@@ -349,6 +402,7 @@ main() {
     echo -e "${CYAN}6)${NC} Installa Miniconda"
     echo -e "${CYAN}7)${NC} Installa ROS2"
     echo -e "${CYAN}8)${NC} Configura Git"
+    echo -e "${CYAN}9)${NC} Installa Docker"
     echo -e "${CYAN}0)${NC} Esci"
     echo -e "${BLUE}─────────────────────────${NC}"
     
@@ -362,6 +416,7 @@ main() {
             install_vscode
             install_miniconda
             install_ros2
+            install_docker
             configure_git
             ;;
         2)
@@ -385,6 +440,9 @@ main() {
         8)
             configure_git
             ;;
+        9)
+            install_docker
+            ;;
         0)
             echo -e "${GREEN}Arrivederci!${NC}"
             exit 0
@@ -403,3 +461,9 @@ main() {
 
 # Esegui il menu principale
 main
+
+
+
+docker 
+orca
+config terminator
