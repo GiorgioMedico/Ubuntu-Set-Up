@@ -146,6 +146,9 @@ install_utils() {
             print_error "Errore nell'installazione di $package"
         fi
     done
+    
+    print_success "Installazione utilità completata"
+    show_progress 0.05
 }
 
 # Funzione per installare pacchetti LaTeX
@@ -172,11 +175,13 @@ install_latex() {
         print_status "Installazione $package..."
         if apt install -y "$package"; then
             print_success "$package installato con successo"
-            show_progress 0.01
         else
             print_error "Errore nell'installazione di $package"
         fi
     done
+    
+    print_success "Installazione LaTeX completata"
+    show_progress 0.05
 }
 
 # Funzione per installare VSCode
